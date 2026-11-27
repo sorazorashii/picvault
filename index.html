@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>PicVault - 你的私有图床</title>
 <style>
-  /* Google Material 3 Inspired Design System */
   :root {
     --md-sys-color-background: #f8f9fa;
     --md-sys-color-surface: #ffffff;
@@ -43,6 +42,27 @@
   a { color: var(--md-sys-color-primary); text-decoration: none; font-weight: 500; cursor: pointer; }
   a:hover { text-decoration: underline; }
   .hidden { display: none !important; }
+
+  /* 全局加载遮罩 */
+  #globalLoader {
+    position: fixed; inset: 0; background: var(--md-sys-color-background);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 9999; transition: opacity .3s ease;
+  }
+  #globalLoader.hidden { opacity: 0; pointer-events: none; display: flex !important; }
+  .logo-spinner { position: relative; width: 64px; height: 64px; margin-bottom: 24px; }
+  .logo-spinner::before, .logo-spinner::after {
+    content: ''; position: absolute; border-radius: 12px; animation: pulse-rotate 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  .logo-spinner::before { inset: 0; background: var(--md-sys-color-primary); opacity: 0.8; }
+  .logo-spinner::after { inset: 8px; background: var(--md-sys-color-background); animation-delay: -1s; }
+  @keyframes pulse-rotate {
+    0% { transform: scale(1) rotate(0deg); border-radius: 12px; }
+    50% { transform: scale(0.8) rotate(180deg); border-radius: 50%; }
+    100% { transform: scale(1) rotate(360deg); border-radius: 12px; }
+  }
+  .loader-text { color: var(--md-sys-color-on-surface-variant); font-size: 15px; letter-spacing: 1px; animation: pulse-opacity 1.5s ease-in-out infinite alternate; }
+  @keyframes pulse-opacity { from { opacity: 0.4; } to { opacity: 1; } }
 
   /* Auth View */
   .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -85,14 +105,16 @@
   .btn-text { background: transparent; color: var(--md-sys-color-primary); padding: 8px 12px; }
   .btn-text:hover { background: var(--md-sys-color-secondary-container); }
   
-  .btn-tonal { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); padding: 8px 16px; }
+  .btn-tonal { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); padding: 8px 16px; border-radius: var(--radius-full); }
   .btn-tonal:hover { box-shadow: var(--shadow-1); }
   
-  .btn-outline { background: transparent; border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-surface); padding: 8px 16px; }
+  .btn-outline { background: transparent; border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-surface); padding: 8px 16px; border-radius: var(--radius-full); }
   .btn-outline:hover { background: var(--md-sys-color-surface-variant); }
   
-  .btn-danger { background: transparent; color: var(--md-sys-color-error); border: 1px solid transparent; padding: 8px 16px; }
+  .btn-danger { background: transparent; color: var(--md-sys-color-error); border: 1px solid transparent; padding: 8px 16px; border-radius: var(--radius-full); }
   .btn-danger:hover { background: var(--md-sys-color-error-container); }
+  
+  .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 50%; }
 
   .switch { text-align: center; margin-top: 24px; font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
   .msg { margin-top: 20px; font-size: 14px; padding: 12px 16px; border-radius: var(--radius-sm); display: flex; align-items: center; }
@@ -148,12 +170,12 @@
   .thumb:hover { transform: scale(1.02); }
   
   .card-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
-  .card-title { font-size: 15px; font-weight: 500; color: var(--md-sys-color-on-surface); word-break: break-all; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-title { font-size: 15px; font-weight: 500; color: var(--md-sys-color-on-surface); word-break: break-all; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
   .card-meta { font-size: 13px; color: var(--md-sys-color-on-surface-variant); display: flex; justify-content: space-between; align-items: center; }
-  .badge { font-size: 12px; padding: 2px 10px; border-radius: var(--radius-full); background: var(--md-sys-color-surface-variant); font-weight: 500; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: var(--radius-full); background: var(--md-sys-color-surface-variant); font-weight: 500; }
   
-  .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
-  .card-actions button { flex: 1; padding: 8px 0; font-size: 13px; border-radius: var(--radius-sm); }
+  .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; align-items: center; }
+  .card-actions .btn-tonal { flex: 1; }
   
   .empty { text-align: center; color: var(--md-sys-color-on-surface-variant); padding: 80px 20px; font-size: 16px; grid-column: 1 / -1; }
   .pager { display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 48px; font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
@@ -163,7 +185,7 @@
     position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px); 
     background: #323232; color: #fff; padding: 14px 24px; border-radius: var(--radius-sm); 
     font-size: 14px; opacity: 0; pointer-events: none; 
-    transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999; 
+    transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10000; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -171,8 +193,14 @@
 </head>
 <body>
 
+<!-- 全局加载遮罩 -->
+<div id="globalLoader">
+  <div class="logo-spinner"></div>
+  <div class="loader-text">正在进入 PicVault...</div>
+</div>
+
 <!-- Auth View -->
-<div id="authView" class="auth-wrap">
+<div id="authView" class="auth-wrap hidden">
   <div class="auth-card">
     <h1 id="authTitle">登录 PicVault</h1>
     <p class="sub" id="authSub">使用邮箱和密码登录你的账户</p>
@@ -205,7 +233,7 @@
     </div>
     <div class="user">
       <span id="userEmail"></span>
-      <button id="logoutBtn" class="btn-outline" style="border-radius: var(--radius-full); padding: 6px 16px;">退出</button>
+      <button id="logoutBtn" class="btn-outline" style="padding: 6px 16px;">退出</button>
     </div>
   </div>
 
@@ -289,9 +317,9 @@
         <button id="refreshBtn" class="btn-text">刷新</button>
       </div>
       <div id="pager" class="pager hidden" style="margin:0;">
-        <button id="prevBtn" class="btn-outline" style="border:none; padding:8px;">上一页</button>
+        <button id="prevBtn" class="btn-outline" style="border:none;">上一页</button>
         <span id="pageInfo"></span>
-        <button id="nextBtn" class="btn-outline" style="border:none; padding:8px;">下一页</button>
+        <button id="nextBtn" class="btn-outline" style="border:none;">下一页</button>
       </div>
     </div>
     
@@ -334,6 +362,13 @@ function setMsg(el, text, type) {
   if (!text) el.classList.add("hidden");
   else el.classList.remove("hidden");
 }
+function hideLoader() {
+  const loader = $("globalLoader");
+  loader.classList.add("hidden");
+  // 动画结束后彻底移除 DOM
+  setTimeout(() => loader.style.display = "none", 300);
+}
+
 async function api(path, opts = {}) {
   const headers = opts.headers || {};
   if (state.token) headers["Authorization"] = "Bearer " + state.token;
@@ -397,21 +432,31 @@ function logout() {
   state.token = "";
   state.user = null;
   localStorage.removeItem("pv_token");
-  $("authView").classList.remove("hidden");
   $("mainView").classList.add("hidden");
+  $("authView").classList.remove("hidden");
+  hideLoader();
 }
+
 $("logoutBtn").addEventListener("click", logout);
 
 async function enterMain() {
   $("authView").classList.add("hidden");
   $("mainView").classList.remove("hidden");
   $("userEmail").textContent = state.user ? state.user.email : "";
+  hideLoader();
   await loadList();
 }
 
 /* ========== 启动 ========== */
 async function boot() {
-  if (!state.token) { $("authView").classList.remove("hidden"); return; }
+  // 如果本地没 Token，直接显示登录页，关闭 Loading
+  if (!state.token) { 
+    $("authView").classList.remove("hidden"); 
+    hideLoader();
+    return; 
+  }
+  
+  // 如果有 Token，保持 Loading 状态，去验证
   try {
     const { json } = await api("/api/auth/me");
     if (!json.success) throw new Error("token 无效");
@@ -636,16 +681,85 @@ function renderList(items) {
 
     // 复制直链
     const copyDirectBtn = document.createElement("button");
-    copyDirectBtn.className = "btn-outline";
-    copyDirectBtn.textContent = "复制链接";
+    copyDirectBtn.className = "btn-outline btn-icon";
+    copyDirectBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    copyDirectBtn.title = "复制直链";
     copyDirectBtn.addEventListener("click", () => copyText(it.url));
     actions.appendChild(copyDirectBtn);
 
     // 分享页（黑底）
     const viewBtn = document.createElement("button");
-    viewBtn.className = "btn-outline";
-    viewBtn.textContent = "分享页";
+    viewBtn.className = "btn-outline btn-icon";
+    viewBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    viewBtn.title = "打开分享页";
     viewBtn.addEventListener("click", () => window.open(SHARE_BASE + it.filename, "_blank"));
     actions.appendChild(viewBtn);
 
-    //
+    // 删除
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn-danger btn-icon";
+    delBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+    delBtn.title = "删除记录";
+    delBtn.addEventListener("click", () => deleteImage(it.id));
+    actions.appendChild(delBtn);
+
+    body.appendChild(actions);
+    card.appendChild(body);
+    grid.appendChild(card);
+  }
+}
+
+function renderPager() {
+  const pages = Math.max(1, Math.ceil(state.total / state.size));
+  $("pageInfo").textContent = `第 ${state.page} / ${pages} 页 · 共 ${state.total} 张`;
+  $("prevBtn").disabled = state.page <= 1;
+  $("nextBtn").disabled = state.page >= pages;
+}
+
+$("prevBtn").addEventListener("click", () => { if (state.page > 1) { state.page--; loadList(); } });
+$("nextBtn").addEventListener("click", () => {
+  const pages = Math.max(1, Math.ceil(state.total / state.size));
+  if (state.page < pages) { state.page++; loadList(); }
+});
+$("searchBtn").addEventListener("click", () => {
+  state.search = $("searchInput").value.trim();
+  state.page = 1;
+  loadList();
+});
+$("searchInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("searchBtn").click();
+});
+$("refreshBtn").addEventListener("click", () => loadList());
+
+async function deleteImage(id) {
+  if (!confirm("确定删除这条记录？仅从你账户移除，已分享的图片仍可能有效。")) return;
+  try {
+    const { json } = await api("/api/images/" + id, { method: "DELETE" });
+    if (!json.success) throw new Error(json.error || "删除失败");
+    toast("已删除");
+    await loadList();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("直链已复制");
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast("直链已复制"); }
+    catch { toast("复制失败，请手动复制"); }
+    document.body.removeChild(ta);
+  }
+}
+
+/* ========== 启动 ========== */
+boot();
+</script>
+</body>
+</html>
