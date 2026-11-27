@@ -3,76 +3,121 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PicVault</title>
+<title>PicVault - 你的私有图床</title>
 <style>
   :root {
-    --bg: #0f1115; --panel: #171a21; --border: #262b36; --text: #e6e8ee;
-    --muted: #8b93a7; --primary: #3b82f6; --danger: #ef4444; --ok: #22c55e;
+    --bg: #09090b;
+    --panel: #121215;
+    --panel-hover: #18181b;
+    --border: #27272a;
+    --border-light: #3f3f46;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --radius: 12px;
   }
+  
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
-  a { color: var(--primary); }
-  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  
+  body { 
+    margin: 0; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; 
+    background-color: var(--bg); 
+    color: var(--text); 
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
   .hidden { display: none !important; }
 
-  /* 认证 */
+  /* 认证视图 */
   .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .auth-card { width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
-  .auth-card h1 { margin: 0 0 6px; font-size: 22px; }
-  .auth-card p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .auth-card { width: 100%; max-width: 400px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+  .auth-card h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: -0.5px; }
+  .auth-card p.sub { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
+  
+  /* 表单元素 */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
   input[type=email], input[type=password], input[type=text], select {
-    width: 100%; padding: 10px 12px; background: #0d0f14; border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-size: 14px; outline: none;
+    width: 100%; padding: 10px 14px; background: #09090b; border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; outline: none; transition: border-color .15s ease;
   }
   input:focus, select:focus { border-color: var(--primary); }
-  button { cursor: pointer; border: none; border-radius: 8px; font-size: 14px; padding: 10px 14px; font-weight: 500; }
-  .btn-primary { background: var(--primary); color: #fff; width: 100%; }
-  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-sm { padding: 6px 10px; font-size: 12px; background: #232838; color: var(--text); }
-  .btn-sm:hover { background: #2c3346; }
-  .btn-danger { background: var(--danger); color: #fff; }
-  .switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--muted); }
-  .msg { margin-top: 12px; font-size: 13px; padding: 8px 10px; border-radius: 8px; }
-  .msg.err { background: rgba(239,68,68,.12); color: #fca5a5; }
-  .msg.ok { background: rgba(34,197,94,.12); color: #86efac; }
+  input::placeholder { color: #52525b; }
+  
+  button { cursor: pointer; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all .15s ease; }
+  .btn-primary { background: var(--primary); color: #fff; width: 100%; padding: 12px; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+  
+  .btn-sm { padding: 6px 12px; font-size: 12px; background: var(--border); color: var(--text); border: 1px solid transparent; }
+  .btn-sm:hover { background: var(--border-light); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
+  .btn-danger:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
+  
+  .switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+  .msg { margin-top: 16px; font-size: 13px; padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; }
+  .msg.err { background: rgba(239,68,68,.1); color: #fca5a5; border: 1px solid rgba(239,68,68,.2); }
+  .msg.ok { background: rgba(34,197,94,.1); color: #86efac; border: 1px solid rgba(34,197,94,.2); }
 
   /* 顶栏 */
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--panel); }
-  .topbar .brand { font-weight: 700; font-size: 16px; }
-  .topbar .user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+  .topbar .brand { font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .topbar .brand::before { content: ""; display: block; width: 12px; height: 12px; background: var(--primary); border-radius: 4px; }
+  .topbar .user { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--muted); }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 
   /* 上传区 */
-  .upload-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-  .dropzone { border: 2px dashed var(--border); border-radius: 10px; padding: 28px; text-align: center; color: var(--muted); transition: .15s; }
-  .dropzone.drag { border-color: var(--primary); background: rgba(59,130,246,.06); color: var(--text); }
-  .dropzone strong { color: var(--text); }
-  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+  .upload-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 32px; }
+  .dropzone { border: 2px dashed var(--border); border-radius: 10px; padding: 40px 20px; text-align: center; color: var(--muted); transition: all .2s; cursor: pointer; }
+  .dropzone:hover, .dropzone.drag { border-color: var(--primary); background: rgba(59,130,246,.05); color: var(--text); }
+  .dropzone strong { display: block; font-size: 15px; color: var(--text); margin-bottom: 6px; }
+  
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
   .opts .field { margin: 0; }
-  .pwd-row { margin-top: 12px; display: none; }
+  
+  .pwd-row { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); display: none; }
   .pwd-row.show { display: block; }
-  .progress { height: 6px; background: #0d0f14; border-radius: 4px; overflow: hidden; margin-top: 14px; display: none; }
+  
+  .progress { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 16px; display: none; }
   .progress.show { display: block; }
-  .progress .bar { height: 100%; width: 0; background: var(--primary); transition: width .2s; }
+  .progress .bar { height: 100%; width: 0; background: var(--primary); transition: width .3s ease; }
 
-  /* 列表 */
-  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
-  .toolbar input[type=text] { max-width: 260px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
-  .thumb { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #0d0f14; display: block; transition: opacity .2s; }
-  .thumb:hover { opacity: 0.85; }
-  .card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-  .card-title { font-size: 12px; color: var(--text); word-break: break-all; line-height: 1.4; }
-  .card-meta { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
-  .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #232838; color: var(--muted); }
-  .card-actions { display: flex; gap: 6px; margin-top: auto; }
-  .card-actions button { flex: 1; }
-  .empty { text-align: center; color: var(--muted); padding: 40px; font-size: 14px; }
-  .pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 20px; font-size: 13px; color: var(--muted); }
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 999; }
-  .toast.show { opacity: 1; }
+  /* 列表工具栏 */
+  .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; justify-content: space-between; flex-wrap: wrap; }
+  .toolbar-left { display: flex; gap: 12px; align-items: center; flex: 1; min-width: 280px; }
+  .toolbar input[type=text] { max-width: 300px; padding: 8px 12px; font-size: 13px; background: var(--panel); }
+  .toolbar button { padding: 8px 16px; }
+
+  /* 图片网格 */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; transition: transform .2s, border-color .2s, box-shadow .2s; }
+  .card:hover { transform: translateY(-2px); border-color: var(--border-light); box-shadow: 0 8px 24px -8px rgba(0,0,0,0.5); }
+  
+  .thumb-wrap { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; overflow: hidden; }
+  .thumb { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; opacity: 0; transition: opacity .3s ease; }
+  .thumb.loaded { opacity: 1; }
+  .thumb:hover { transform: scale(1.02); }
+  
+  .card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); word-break: break-all; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-meta { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+  
+  .card-actions { display: flex; gap: 8px; margin-top: auto; }
+  .card-actions button { flex: 1; padding: 6px 0; display: flex; justify-content: center; align-items: center; }
+  
+  .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 14px; grid-column: 1 / -1; }
+  .pager { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; font-size: 13px; color: var(--muted); }
+  
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: #18181b; border: 1px solid var(--border); color: #fff; padding: 12px 24px; border-radius: 99px; font-size: 13px; opacity: 0; pointer-events: none; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -82,6 +127,7 @@
   <div class="auth-card">
     <h1 id="authTitle">登录 PicVault</h1>
     <p class="sub" id="authSub">使用邮箱和密码登录你的账户</p>
+    
     <div class="field">
       <label>邮箱</label>
       <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
@@ -90,8 +136,10 @@
       <label>密码</label>
       <input id="password" type="password" placeholder="至少 8 位" autocomplete="current-password" />
     </div>
+    
     <button id="authBtn" class="btn-primary">登录</button>
     <div id="authMsg" class="msg hidden"></div>
+    
     <div class="switch">
       <span id="switchText">还没有账户？</span>
       <a href="#" id="switchLink">注册</a>
@@ -113,10 +161,9 @@
     <!-- 上传 -->
     <div class="upload-card">
       <div id="dropzone" class="dropzone">
-        <strong>点击或拖拽图片到此处</strong><br/>
-        <span style="font-size:12px;">静态图自动压缩为 WebP；动图/视频原样上传，限 20MB</span>
-        <input id="fileInput" type="file" class="hidden"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,video/mp4,video/webm,video/quicktime,video/x-msvideo" />
+        <strong>点击或拖拽图片到此处</strong>
+        <span style="font-size:12px;">静态图自动压缩为 WebP；动图/视频原样上传，最大 20MB</span>
+        <input id="fileInput" type="file" class="hidden" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,video/mp4,video/webm,video/quicktime,video/x-msvideo" />
       </div>
 
       <div class="opts">
@@ -161,20 +208,22 @@
       </div>
 
       <div id="pwdRow" class="pwd-row">
-        <div class="field">
-          <label>密码类型</label>
-          <select id="pwdType">
-            <option value="plain">普通密码</option>
-            <option value="qa">问答式</option>
-          </select>
-        </div>
-        <div class="field">
-          <label id="pwdLabel">密码</label>
-          <input id="pwdValue" type="text" placeholder="访问密码" />
-        </div>
-        <div class="field hidden" id="pwdQuestionField">
-          <label>问题</label>
-          <input id="pwdQuestion" type="text" placeholder="访问者看到的问题" maxlength="150" />
+        <div class="opts" style="margin-top:0; padding-top:0; border:none;">
+          <div class="field">
+            <label>密码类型</label>
+            <select id="pwdType">
+              <option value="plain">普通密码</option>
+              <option value="qa">问答式</option>
+            </select>
+          </div>
+          <div class="field">
+            <label id="pwdLabel">密码</label>
+            <input id="pwdValue" type="text" placeholder="访问密码" />
+          </div>
+          <div class="field hidden" id="pwdQuestionField">
+            <label>问题</label>
+            <input id="pwdQuestion" type="text" placeholder="访问者看到的问题" maxlength="150" />
+          </div>
         </div>
       </div>
 
@@ -184,17 +233,20 @@
 
     <!-- 列表 -->
     <div class="toolbar">
-      <input id="searchInput" type="text" placeholder="按文件名搜索…" />
-      <button id="searchBtn" class="btn-sm">搜索</button>
-      <button id="refreshBtn" class="btn-sm">刷新</button>
+      <div class="toolbar-left">
+        <input id="searchInput" type="text" placeholder="按文件名搜索…" />
+        <button id="searchBtn" class="btn-sm">搜索</button>
+        <button id="refreshBtn" class="btn-sm">刷新</button>
+      </div>
+      <div id="pager" class="pager hidden" style="margin:0;">
+        <button id="prevBtn" class="btn-sm">上一页</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn" class="btn-sm">下一页</button>
+      </div>
     </div>
+    
     <div id="listGrid" class="grid"></div>
     <div id="emptyState" class="empty hidden">还没有上传任何图片。</div>
-    <div id="pager" class="pager hidden">
-      <button id="prevBtn" class="btn-sm">上一页</button>
-      <span id="pageInfo"></span>
-      <button id="nextBtn" class="btn-sm">下一页</button>
-    </div>
   </div>
 </div>
 
@@ -202,9 +254,10 @@
 
 <script>
 /* ========== 配置 ========== */
-const WORKER_BASE = "https://api.picvault.cc.cd";
+const WORKER_BASE = "https://api.picvault.cc.cd"; // 记得换成你真实的 Worker 域名
 const SOURCE_API = "https://img.scdn.io/api/v1.php";
-const SHARE_BASE = WORKER_BASE + "/view/"; // 分享链接前缀
+const SHARE_BASE = WORKER_BASE + "/view/";
+const DIRECT_BASE = WORKER_BASE + "/i/";
 
 /* ========== 状态 ========== */
 const state = {
@@ -323,7 +376,7 @@ async function boot() {
 /* ========== 压缩 ========== */
 const COMPRESS_MAX_EDGE = 2048;
 const COMPRESS_QUALITY = 0.8;
-const MAX_DIRECT_SIZE = 20 * 1024 * 1024; // 放宽到 20MB
+const MAX_DIRECT_SIZE = 20 * 1024 * 1024; // 20MB
 
 async function compressIfNeeded(file) {
   const type = file.type || "";
@@ -349,7 +402,7 @@ async function compressIfNeeded(file) {
   }
 }
 
-/* ========== 上传（直传源站 + 登记 Worker） ========== */
+/* ========== 上传 ========== */
 $("dropzone").addEventListener("click", () => $("fileInput").click());
 $("dropzone").addEventListener("dragover", (e) => { e.preventDefault(); $("dropzone").classList.add("drag"); });
 $("dropzone").addEventListener("dragleave", () => $("dropzone").classList.remove("drag"));
@@ -389,21 +442,20 @@ async function handleUpload(rawFile) {
   $("progressBar").style.width = "0%";
 
   try {
-    // 1. 压缩
     const { file: compressed, compressed: didCompress } = await compressIfNeeded(rawFile);
     const originalName = rawFile.name || compressed.name || "upload";
     if (!originalName) throw new Error("原始文件名不可为空");
     if (compressed.size > MAX_DIRECT_SIZE) {
-      throw new Error(`文件超过 ${MAX_DIRECT_SIZE / 1024 / 1024}MB 限制，请先手动压缩`);
+      throw new Error(`文件超过 ${MAX_DIRECT_SIZE / 1024 / 1024}MB 限制`);
     }
     $("progressBar").style.width = "20%";
 
-    // 2. 直传源站
     const fd = new FormData();
     fd.append("image", compressed, originalName);
     const of = $("outputFormat").value; if (of) fd.append("outputFormat", of);
     const cdn = $("cdnDomain").value; if (cdn) fd.append("cdn_domain", cdn);
     const storage = $("storageDestination").value; if (storage) fd.append("storage_destination", storage);
+    
     if (pwdEnabled) {
       fd.append("password_enabled", "true");
       const ptype = $("pwdType").value;
@@ -418,7 +470,7 @@ async function handleUpload(rawFile) {
 
     const srcRes = await fetch(SOURCE_API, { method: "POST", body: fd });
     let srcJson;
-    try { srcJson = await srcRes.json(); } catch { throw new Error("源站返回非 JSON"); }
+    try { srcJson = await srcRes.json(); } catch { throw new Error("源站返回格式错误"); }
     if (!srcJson.success || !srcJson.data || !srcJson.data.filename) {
       throw new Error(srcJson.error || srcJson.message || "源站上传失败");
     }
@@ -429,7 +481,6 @@ async function handleUpload(rawFile) {
     const storageBackend = srcJson.data.storage_backend || storage || "local";
     const passwordProtected = /\/p\//.test(sourceUrl);
 
-    // 3. 登记 Worker
     const { json: regJson } = await api("/api/register-image", {
       method: "POST",
       body: JSON.stringify({
@@ -444,7 +495,7 @@ async function handleUpload(rawFile) {
     if (!regJson.success) throw new Error(regJson.error || "登记失败");
 
     $("progressBar").style.width = "100%";
-    setMsg($("uploadMsg"), `上传成功${didCompress ? "（已压缩）" : ""}：${filename}`, "ok");
+    setMsg($("uploadMsg"), `上传成功${didCompress ? " (已压缩)" : ""}`, "ok");
     $("pwdValue").value = "";
     $("pwdQuestion").value = "";
     await loadList();
@@ -485,17 +536,25 @@ function renderList(items) {
     const card = document.createElement("div");
     card.className = "card";
 
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "thumb-wrap";
+    
     const img = document.createElement("img");
     img.className = "thumb";
     img.loading = "lazy";
     img.src = it.url;
     img.alt = it.filename;
     img.referrerPolicy = "no-referrer";
-    img.title = "点击打开分享页";
-    img.style.cursor = "pointer";
-    // 点击缩略图跳转到全屏分享页
-    img.addEventListener("click", () => window.open(SHARE_BASE + it.filename, "_blank"));
-    card.appendChild(img);
+    img.title = "点击打开直链";
+    
+    // 图片加载完成后渐显
+    img.onload = () => img.classList.add("loaded");
+    
+    // 点击打开直链
+    img.addEventListener("click", () => window.open(DIRECT_BASE + it.filename, "_blank"));
+    
+    thumbWrap.appendChild(img);
+    card.appendChild(thumbWrap);
 
     const body = document.createElement("div");
     body.className = "card-body";
@@ -520,13 +579,23 @@ function renderList(items) {
     const actions = document.createElement("div");
     actions.className = "card-actions";
 
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "btn-sm";
-    copyBtn.textContent = "复制分享链接";
-    // 复制我们自己的域名链接
-    copyBtn.addEventListener("click", () => copyText(SHARE_BASE + it.filename));
-    actions.appendChild(copyBtn);
+    // 复制直链 (自有域名)
+    const copyDirectBtn = document.createElement("button");
+    copyDirectBtn.className = "btn-sm";
+    copyDirectBtn.textContent = "复制直链";
+    copyDirectBtn.title = "直接用于 img 标签或 Markdown";
+    copyDirectBtn.addEventListener("click", () => copyText(DIRECT_BASE + it.filename));
+    actions.appendChild(copyDirectBtn);
 
+    // 全屏预览页
+    const copyViewBtn = document.createElement("button");
+    copyViewBtn.className = "btn-sm";
+    copyViewBtn.textContent = "分享页";
+    copyViewBtn.title = "黑底全屏网页预览";
+    copyViewBtn.addEventListener("click", () => window.open(SHARE_BASE + it.filename, "_blank"));
+    actions.appendChild(copyViewBtn);
+
+    // 删除
     const delBtn = document.createElement("button");
     delBtn.className = "btn-sm btn-danger";
     delBtn.textContent = "删除";
@@ -562,7 +631,7 @@ $("searchInput").addEventListener("keydown", (e) => {
 $("refreshBtn").addEventListener("click", () => loadList());
 
 async function deleteImage(id) {
-  if (!confirm("确定删除这条记录？删除后仅从你的列表移除，已分享的链接仍可能有效。")) return;
+  if (!confirm("确定删除这条记录？仅从你账户移除，已分享的图片仍可能有效。")) return;
   try {
     const { json } = await api("/api/images/" + id, { method: "DELETE" });
     if (!json.success) throw new Error(json.error || "删除失败");
@@ -576,13 +645,13 @@ async function deleteImage(id) {
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
-    toast("分享链接已复制");
+    toast("已复制到剪贴板");
   } catch {
     const ta = document.createElement("textarea");
     ta.value = text;
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand("copy"); toast("分享链接已复制"); }
+    try { document.execCommand("copy"); toast("已复制到剪贴板"); }
     catch { toast("复制失败，请手动复制"); }
     document.body.removeChild(ta);
   }
