@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PicVault</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --border: #262b36; --text: #e6e8ee;
+    --muted: #8b93a7; --primary: #3b82f6; --danger: #ef4444; --ok: #22c55e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
+  a { color: var(--primary); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .hidden { display: none !important; }
+
+  /* 认证 */
+  .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .auth-card { width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
+  .auth-card h1 { margin: 0 0 6px; font-size: 22px; }
+  .auth-card p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input[type=email], input[type=password], input[type=text], select {
+    width: 100%; padding: 10px 12px; background: #0d0f14; border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--primary); }
+  button { cursor: pointer; border: none; border-radius: 8px; font-size: 14px; padding: 10px 14px; font-weight: 500; }
+  .btn-primary { background: var(--primary); color: #fff; width: 100%; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-sm { padding: 6px 10px; font-size: 12px; background: #232838; color: var(--text); }
+  .btn-sm:hover { background: #2c3346; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--muted); }
+  .msg { margin-top: 12px; font-size: 13px; padding: 8px 10px; border-radius: 8px; }
+  .msg.err { background: rgba(239,68,68,.12); color: #fca5a5; }
+  .msg.ok { background: rgba(34,197,94,.12); color: #86efac; }
+
+  /* 顶栏 */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  .topbar .brand { font-weight: 700; font-size: 16px; }
+  .topbar .user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+
+  /* 上传区 */
+  .upload-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .dropzone { border: 2px dashed var(--border); border-radius: 10px; padding: 28px; text-align: center; color: var(--muted); transition: .15s; }
+  .dropzone.drag { border-color: var(--primary); background: rgba(59,130,246,.06); color: var(--text); }
+  .dropzone strong { color: var(--text); }
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+  .opts .field { margin: 0; }
+  .pwd-row { margin-top: 12px; display: none; }
+  .pwd-row.show { display: block; }
+  .progress { height: 6px; background: #0d0f14; border-radius: 4px; overflow: hidden; margin-top: 14px; display: none; }
+  .progress.show { display: block; }
+  .progress .bar { height: 100%; width: 0; background: var(--primary); transition: width .2s; }
+
+  /* 列表 */
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .toolbar input[type=text] { max-width: 260px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .thumb { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #0d0f14; display: block; }
+  .card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .card-title { font-size: 12px; color: var(--text); word-break: break-all; line-height: 1.4; }
+  .card-meta { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+  .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #232838; color: var(--muted); }
+  .card-actions { display: flex; gap: 6px; margin-top: auto; }
+  .card-actions button { flex: 1; }
+  .empty { text-align: center; color: var(--muted); padding: 40px; font-size: 14px; }
+  .pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 20px; font-size: 13px; color: var(--muted); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 999; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- 认证视图 -->
+<div id="authView" class="auth-wrap">
+  <div class="auth-card">
+    <h1 id="authTitle">登录 PicVault</h1>
+    <p class="sub" id="authSub">使用邮箱和密码登录你的账户</p>
+    <div class="field">
+      <label>邮箱</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input id="password" type="password" placeholder="至少 8 位" autocomplete="current-password" />
+    </div>
+    <button id="authBtn" class="btn-primary">登录</button>
+    <div id="authMsg" class="msg hidden"></div>
+    <div class="switch">
+      <span id="switchText">还没有账户？</span>
+      <a href="#" id="switchLink">注册</a>
+    </div>
+  </div>
+</div>
+
+<!-- 主视图 -->
+<div id="mainView" class="hidden">
+  <div class="topbar">
+    <div class="brand">PicVault</div>
+    <div class="user">
+      <span id="userEmail"></span>
+      <button id="logoutBtn" class="btn-sm">退出</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- 上传 -->
+    <div class="upload-card">
+      <div id="dropzone" class="dropzone">
+        <strong>点击或拖拽图片到此处</strong><br/>
+        <span style="font-size:12px;">静态图会自动压缩为 WebP；动图/视频不压缩，限 10MB</span>
+        <input id="fileInput" type="file" class="hidden"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,video/mp4,video/webm,video/quicktime,video/x-msvideo" />
+      </div>
+
+      <div class="opts">
+        <div class="field">
+          <label>输出格式</label>
+          <select id="outputFormat">
+            <option value="">auto（默认）</option>
+            <option value="jpg">jpg</option>
+            <option value="png">png</option>
+            <option value="webp">webp</option>
+            <option value="gif">gif</option>
+            <option value="webp_animated">webp_animated</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>CDN 域名</label>
+          <select id="cdnDomain">
+            <option value="img.scdn.io">img.scdn.io（默认）</option>
+            <option value="cloudflareimg.cdn.sn">cloudflareimg.cdn.sn</option>
+            <option value="edgeoneimg.cdn.sn">edgeoneimg.cdn.sn</option>
+            <option value="esaimg.cdn1.vip">esaimg.cdn1.vip</option>
+            <option value="cloudflarecnimg.scdn.io">cloudflarecnimg.scdn.io</option>
+            <option value="anycastimg.scdn.io">anycastimg.scdn.io</option>
+            <option value="edgeoneimg.cdn1.vip">edgeoneimg.cdn1.vip</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>存储位置</label>
+          <select id="storageDestination">
+            <option value="local">local（默认）</option>
+            <option value="telegram">telegram</option>
+            <option value="r2">r2（Cloudflare R2）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>密码保护</label>
+          <select id="pwdEnabled">
+            <option value="false">不启用</option>
+            <option value="true">启用</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="pwdRow" class="pwd-row">
+        <div class="field">
+          <label>密码类型</label>
+          <select id="pwdType">
+            <option value="plain">普通密码</option>
+            <option value="qa">问答式</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="pwdLabel">密码</label>
+          <input id="pwdValue" type="text" placeholder="访问密码" />
+        </div>
+        <div class="field hidden" id="pwdQuestionField">
+          <label>问题</label>
+          <input id="pwdQuestion" type="text" placeholder="访问者看到的问题" maxlength="150" />
+        </div>
+      </div>
+
+      <div id="progress" class="progress"><div id="progressBar" class="bar"></div></div>
+      <div id="uploadMsg" class="msg hidden"></div>
+    </div>
+
+    <!-- 列表 -->
+    <div class="toolbar">
+      <input id="searchInput" type="text" placeholder="按文件名搜索…" />
+      <button id="searchBtn" class="btn-sm">搜索</button>
+      <button id="refreshBtn" class="btn-sm">刷新</button>
+    </div>
+    <div id="listGrid" class="grid"></div>
+    <div id="emptyState" class="empty hidden">还没有上传任何图片。</div>
+    <div id="pager" class="pager hidden">
+      <button id="prevBtn" class="btn-sm">上一页</button>
+      <span id="pageInfo"></span>
+      <button id="nextBtn" class="btn-sm">下一页</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ========== 配置 ========== */
+const WORKER_BASE = "https://api.picvault.cc.cd";
+const SOURCE_API = "https://img.scdn.io/api/v1.php";
+
+/* ========== 状态 ========== */
+const state = {
+  token: localStorage.getItem("pv_token") || "",
+  user: null,
+  page: 1,
+  size: 20,
+  total: 0,
+  search: "",
+  uploading: false,
+};
+
+/* ========== 工具 ========== */
+const $ = (id) => document.getElementById(id);
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove("show"), 2000);
+}
+function setMsg(el, text, type) {
+  el.textContent = text || "";
+  el.className = "msg " + (type || "");
+  if (!text) el.classList.add("hidden");
+  else el.classList.remove("hidden");
+}
+async function api(path, opts = {}) {
+  const headers = opts.headers || {};
+  if (state.token) headers["Authorization"] = "Bearer " + state.token;
+  if (opts.body && !(opts.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+  const res = await fetch(WORKER_BASE + path, { ...opts, headers });
+  let json;
+  try { json = await res.json(); } catch { json = { success: false, error: "响应解析失败" }; }
+  if (res.status === 401) {
+    logout();
+    throw new Error("登录已过期，请重新登录");
+  }
+  return { res, json };
+}
+
+/* ========== 认证 ========== */
+let authMode = "login";
+function switchAuthMode() {
+  authMode = authMode === "login" ? "register" : "login";
+  if (authMode === "login") {
+    $("authTitle").textContent = "登录 PicVault";
+    $("authSub").textContent = "使用邮箱和密码登录你的账户";
+    $("authBtn").textContent = "登录";
+    $("switchText").textContent = "还没有账户？";
+    $("switchLink").textContent = "注册";
+  } else {
+    $("authTitle").textContent = "注册 PicVault";
+    $("authSub").textContent = "创建账户，管理你的图片";
+    $("authBtn").textContent = "注册";
+    $("switchText").textContent = "已有账户？";
+    $("switchLink").textContent = "登录";
+  }
+  setMsg($("authMsg"), "", "");
+}
+
+$("switchLink").addEventListener("click", (e) => { e.preventDefault(); switchAuthMode(); });
+
+$("authBtn").addEventListener("click", async () => {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  if (!email || !password) { setMsg($("authMsg"), "请填写邮箱和密码", "err"); return; }
+  $("authBtn").disabled = true;
+  setMsg($("authMsg"), "处理中…", "");
+  try {
+    const path = authMode === "login" ? "/api/auth/login" : "/api/auth/register";
+    const { json } = await api(path, { method: "POST", body: JSON.stringify({ email, password }) });
+    if (!json.success) throw new Error(json.error || "操作失败");
+    state.token = json.data.token;
+    state.user = json.data.user;
+    localStorage.setItem("pv_token", state.token);
+    enterMain();
+  } catch (e) {
+    setMsg($("authMsg"), e.message, "err");
+  } finally {
+    $("authBtn").disabled = false;
+  }
+});
+
+function logout() {
+  state.token = "";
+  state.user = null;
+  localStorage.removeItem("pv_token");
+  $("authView").classList.remove("hidden");
+  $("mainView").classList.add("hidden");
+}
+$("logoutBtn").addEventListener("click", logout);
+
+async function enterMain() {
+  $("authView").classList.add("hidden");
+  $("mainView").classList.remove("hidden");
+  $("userEmail").textContent = state.user ? state.user.email : "";
+  await loadList();
+}
+
+/* ========== 启动 ========== */
+async function boot() {
+  if (!state.token) { $("authView").classList.remove("hidden"); return; }
+  try {
+    const { json } = await api("/api/auth/me");
+    if (!json.success) throw new Error("token 无效");
+    state.user = json.data.user;
+    await enterMain();
+  } catch {
+    logout();
+  }
+}
+
+/* ========== 压缩 ========== */
+const COMPRESS_MAX_EDGE = 2048;
+const COMPRESS_QUALITY = 0.8;
+const MAX_DIRECT_SIZE = 10 * 1024 * 1024;
+
+async function compressIfNeeded(file) {
+  const type = file.type || "";
+  const isStaticImage = /^image\/(jpeg|png|webp|bmp|tiff)$/.test(type);
+  const isAnimated = /^image\/(gif|webp)$/.test(type) || /^video\//.test(type);
+  if (!isStaticImage) return { file, compressed: false };
+  if (file.size < 500 * 1024) return { file, compressed: false };
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, COMPRESS_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = new OffscreenCanvas(w, h);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close && bitmap.close();
+    const blob = await canvas.convertToBlob({ type: "image/webp", quality: COMPRESS_QUALITY });
+    if (blob.size >= file.size) return { file, compressed: false };
+    const newName = file.name.replace(/\.[^.]+$/, "") + ".webp";
+    return { file: new File([blob], newName, { type: "image/webp" }), compressed: true };
+  } catch {
+    return { file, compressed: false };
+  }
+}
+
+/* ========== 上传（直传源站 + 登记 Worker） ========== */
+$("dropzone").addEventListener("click", () => $("fileInput").click());
+$("dropzone").addEventListener("dragover", (e) => { e.preventDefault(); $("dropzone").classList.add("drag"); });
+$("dropzone").addEventListener("dragleave", () => $("dropzone").classList.remove("drag"));
+$("dropzone").addEventListener("drop", (e) => {
+  e.preventDefault();
+  $("dropzone").classList.remove("drag");
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) handleUpload(f);
+});
+$("fileInput").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (f) handleUpload(f);
+  e.target.value = "";
+});
+
+$("pwdEnabled").addEventListener("change", () => {
+  $("pwdRow").classList.toggle("show", $("pwdEnabled").value === "true");
+});
+$("pwdType").addEventListener("change", () => {
+  const isQa = $("pwdType").value === "qa";
+  $("pwdQuestionField").classList.toggle("hidden", !isQa);
+  $("pwdLabel").textContent = isQa ? "答案" : "密码";
+});
+
+async function handleUpload(rawFile) {
+  if (state.uploading) return;
+  state.uploading = true;
+  const pwdEnabled = $("pwdEnabled").value === "true";
+  if (pwdEnabled && !$("pwdValue").value.trim()) {
+    setMsg($("uploadMsg"), "启用密码保护时必须填写密码/答案", "err");
+    state.uploading = false;
+    return;
+  }
+
+  setMsg($("uploadMsg"), "", "");
+  $("progress").classList.add("show");
+  $("progressBar").style.width = "0%";
+
+  try {
+    // 1. 压缩
+    const { file: compressed, compressed: didCompress } = await compressIfNeeded(rawFile);
+    const originalName = rawFile.name || compressed.name || "upload";
+    if (!originalName) throw new Error("原始文件名不可为空");
+    if (compressed.size > MAX_DIRECT_SIZE) {
+      throw new Error(`压缩后文件仍超过 ${MAX_DIRECT_SIZE / 1024 / 1024}MB，请先手动压缩`);
+    }
+    $("progressBar").style.width = "20%";
+
+    // 2. 直传源站
+    const fd = new FormData();
+    fd.append("image", compressed, originalName);
+    const of = $("outputFormat").value; if (of) fd.append("outputFormat", of);
+    const cdn = $("cdnDomain").value; if (cdn) fd.append("cdn_domain", cdn);
+    const storage = $("storageDestination").value; if (storage) fd.append("storage_destination", storage);
+    if (pwdEnabled) {
+      fd.append("password_enabled", "true");
+      const ptype = $("pwdType").value;
+      fd.append("password_type", ptype);
+      if (ptype === "qa") {
+        fd.append("password_question", $("pwdQuestion").value.trim());
+        fd.append("image_password", $("pwdValue").value.trim());
+      } else {
+        fd.append("image_password", $("pwdValue").value.trim());
+      }
+    }
+
+    const srcRes = await fetch(SOURCE_API, { method: "POST", body: fd });
+    let srcJson;
+    try { srcJson = await srcRes.json(); } catch { throw new Error("源站返回非 JSON"); }
+    if (!srcJson.success || !srcJson.data || !srcJson.data.filename) {
+      throw new Error(srcJson.error || srcJson.message || "源站上传失败");
+    }
+    $("progressBar").style.width = "70%";
+
+    const filename = srcJson.data.filename;
+    const sourceUrl = srcJson.url || srcJson.data.url;
+    const storageBackend = srcJson.data.storage_backend || storage || "local";
+    const passwordProtected = /\/p\//.test(sourceUrl);
+
+    // 3. 登记 Worker
+    const { json: regJson } = await api("/api/register-image", {
+      method: "POST",
+      body: JSON.stringify({
+        filename,
+        source_url: sourceUrl,
+        original_filename: originalName,
+        storage_backend: storageBackend,
+        cdn_domain: cdn || null,
+        password_protected: passwordProtected,
+      }),
+    });
+    if (!regJson.success) throw new Error(regJson.error || "登记失败");
+
+    $("progressBar").style.width = "100%";
+    setMsg($("uploadMsg"), `上传成功${didCompress ? "（已压缩）" : ""}：${filename}`, "ok");
+    $("pwdValue").value = "";
+    $("pwdQuestion").value = "";
+    await loadList();
+  } catch (e) {
+    setMsg($("uploadMsg"), e.message, "err");
+  } finally {
+    state.uploading = false;
+    setTimeout(() => $("progress").classList.remove("show"), 400);
+  }
+}
+
+/* ========== 列表 ========== */
+async function loadList() {
+  const params = new URLSearchParams({
+    page: String(state.page),
+    size: String(state.size),
+  });
+  if (state.search) params.set("search", state.search);
+  const { json } = await api("/api/images?" + params.toString());
+  if (!json.success) { toast(json.error || "加载失败"); return; }
+  state.total = json.data.total;
+  renderList(json.data.items || []);
+  renderPager();
+}
+
+function renderList(items) {
+  const grid = $("listGrid");
+  grid.innerHTML = "";
+  if (!items.length) {
+    $("emptyState").classList.remove("hidden");
+    $("pager").classList.add("hidden");
+    return;
+  }
+  $("emptyState").classList.add("hidden");
+  $("pager").classList.remove("hidden");
+
+  for (const it of items) {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const img = document.createElement("img");
+    img.className = "thumb";
+    img.loading = "lazy";
+    img.src = it.url;
+    img.alt = it.filename;
+    img.referrerPolicy = "no-referrer";
+    card.appendChild(img);
+
+    const body = document.createElement("div");
+    body.className = "card-body";
+
+    const title = document.createElement("div");
+    title.className = "card-title";
+    title.textContent = it.original_filename || it.filename;
+    title.title = it.filename;
+    body.appendChild(title);
+
+    const meta = document.createElement("div");
+    meta.className = "card-meta";
+    const left = document.createElement("span");
+    left.textContent = (it.uploaded_at || "").slice(0, 10);
+    const right = document.createElement("span");
+    right.className = "badge";
+    right.textContent = it.password_protected ? "加密" : (it.storage_backend || "local");
+    meta.appendChild(left);
+    meta.appendChild(right);
+    body.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "btn-sm";
+    copyBtn.textContent = "复制链接";
+    copyBtn.addEventListener("click", () => copyText(it.url));
+    actions.appendChild(copyBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn-sm btn-danger";
+    delBtn.textContent = "删除";
+    delBtn.addEventListener("click", () => deleteImage(it.id));
+    actions.appendChild(delBtn);
+
+    body.appendChild(actions);
+    card.appendChild(body);
+    grid.appendChild(card);
+  }
+}
+
+function renderPager() {
+  const pages = Math.max(1, Math.ceil(state.total / state.size));
+  $("pageInfo").textContent = `第 ${state.page} / ${pages} 页 · 共 ${state.total} 张`;
+  $("prevBtn").disabled = state.page <= 1;
+  $("nextBtn").disabled = state.page >= pages;
+}
+
+$("prevBtn").addEventListener("click", () => { if (state.page > 1) { state.page--; loadList(); } });
+$("nextBtn").addEventListener("click", () => {
+  const pages = Math.max(1, Math.ceil(state.total / state.size));
+  if (state.page < pages) { state.page++; loadList(); }
+});
+$("searchBtn").addEventListener("click", () => {
+  state.search = $("searchInput").value.trim();
+  state.page = 1;
+  loadList();
+});
+$("searchInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("searchBtn").click();
+});
+$("refreshBtn").addEventListener("click", () => loadList());
+
+async function deleteImage(id) {
+  if (!confirm("确定删除这条记录？删除后仅从你的列表移除，已分享的链接仍可能有效。")) return;
+  try {
+    const { json } = await api("/api/images/" + id, { method: "DELETE" });
+    if (!json.success) throw new Error(json.error || "删除失败");
+    toast("已删除");
+    await loadList();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("已复制链接");
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast("已复制链接"); }
+    catch { toast("复制失败，请手动复制"); }
+    document.body.removeChild(ta);
+  }
+}
+
+/* ========== 启动 ========== */
+boot();
+</script>
+</body>
+</html>
