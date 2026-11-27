@@ -254,10 +254,9 @@
 
 <script>
 /* ========== 配置 ========== */
-const WORKER_BASE = "https://api.picvault.cc.cd"; // 记得换成你真实的 Worker 域名
+const WORKER_BASE = "https://api.picvault.cc.cd"; // 你的 Worker 域名
 const SOURCE_API = "https://img.scdn.io/api/v1.php";
 const SHARE_BASE = WORKER_BASE + "/view/";
-const DIRECT_BASE = WORKER_BASE + "/i/";
 
 /* ========== 状态 ========== */
 const state = {
@@ -542,16 +541,16 @@ function renderList(items) {
     const img = document.createElement("img");
     img.className = "thumb";
     img.loading = "lazy";
-    img.src = it.url;
+    img.src = it.url; // 直接用源站图片地址
     img.alt = it.filename;
     img.referrerPolicy = "no-referrer";
-    img.title = "点击打开直链";
+    img.title = "点击查看原图";
     
     // 图片加载完成后渐显
     img.onload = () => img.classList.add("loaded");
     
-    // 点击打开直链
-    img.addEventListener("click", () => window.open(DIRECT_BASE + it.filename, "_blank"));
+    // 点击新标签页打开真实源站图片
+    img.addEventListener("click", () => window.open(it.url, "_blank"));
     
     thumbWrap.appendChild(img);
     card.appendChild(thumbWrap);
@@ -579,21 +578,21 @@ function renderList(items) {
     const actions = document.createElement("div");
     actions.className = "card-actions";
 
-    // 复制直链 (自有域名)
+    // 复制源站直链
     const copyDirectBtn = document.createElement("button");
     copyDirectBtn.className = "btn-sm";
     copyDirectBtn.textContent = "复制直链";
-    copyDirectBtn.title = "直接用于 img 标签或 Markdown";
-    copyDirectBtn.addEventListener("click", () => copyText(DIRECT_BASE + it.filename));
+    copyDirectBtn.title = "直接用于 img 标签或 Markdown 的原图链接";
+    copyDirectBtn.addEventListener("click", () => copyText(it.url));
     actions.appendChild(copyDirectBtn);
 
-    // 全屏预览页
-    const copyViewBtn = document.createElement("button");
-    copyViewBtn.className = "btn-sm";
-    copyViewBtn.textContent = "分享页";
-    copyViewBtn.title = "黑底全屏网页预览";
-    copyViewBtn.addEventListener("click", () => window.open(SHARE_BASE + it.filename, "_blank"));
-    actions.appendChild(copyViewBtn);
+    // 分享预览页
+    const viewBtn = document.createElement("button");
+    viewBtn.className = "btn-sm";
+    viewBtn.textContent = "分享页";
+    viewBtn.title = "我们在 Worker 里生成的干净 HTML 网页";
+    viewBtn.addEventListener("click", () => window.open(SHARE_BASE + it.filename, "_blank"));
+    actions.appendChild(viewBtn);
 
     // 删除
     const delBtn = document.createElement("button");
@@ -645,13 +644,13 @@ async function deleteImage(id) {
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
-    toast("已复制到剪贴板");
+    toast("直链已复制");
   } catch {
     const ta = document.createElement("textarea");
     ta.value = text;
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand("copy"); toast("已复制到剪贴板"); }
+    try { document.execCommand("copy"); toast("直链已复制"); }
     catch { toast("复制失败，请手动复制"); }
     document.body.removeChild(ta);
   }
