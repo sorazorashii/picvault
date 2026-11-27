@@ -61,7 +61,8 @@
   .toolbar input[type=text] { max-width: 260px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
-  .thumb { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #0d0f14; display: block; }
+  .thumb { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #0d0f14; display: block; transition: opacity .2s; }
+  .thumb:hover { opacity: 0.85; }
   .card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
   .card-title { font-size: 12px; color: var(--text); word-break: break-all; line-height: 1.4; }
   .card-meta { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
@@ -113,7 +114,7 @@
     <div class="upload-card">
       <div id="dropzone" class="dropzone">
         <strong>点击或拖拽图片到此处</strong><br/>
-        <span style="font-size:12px;">静态图会自动压缩为 WebP；动图/视频不压缩，限 10MB</span>
+        <span style="font-size:12px;">静态图自动压缩为 WebP；动图/视频原样上传，限 20MB</span>
         <input id="fileInput" type="file" class="hidden"
           accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,video/mp4,video/webm,video/quicktime,video/x-msvideo" />
       </div>
@@ -203,6 +204,7 @@
 /* ========== 配置 ========== */
 const WORKER_BASE = "https://api.picvault.cc.cd";
 const SOURCE_API = "https://img.scdn.io/api/v1.php";
+const SHARE_BASE = WORKER_BASE + "/view/"; // 分享链接前缀
 
 /* ========== 状态 ========== */
 const state = {
@@ -321,12 +323,11 @@ async function boot() {
 /* ========== 压缩 ========== */
 const COMPRESS_MAX_EDGE = 2048;
 const COMPRESS_QUALITY = 0.8;
-const MAX_DIRECT_SIZE = 10 * 1024 * 1024;
+const MAX_DIRECT_SIZE = 20 * 1024 * 1024; // 放宽到 20MB
 
 async function compressIfNeeded(file) {
   const type = file.type || "";
   const isStaticImage = /^image\/(jpeg|png|webp|bmp|tiff)$/.test(type);
-  const isAnimated = /^image\/(gif|webp)$/.test(type) || /^video\//.test(type);
   if (!isStaticImage) return { file, compressed: false };
   if (file.size < 500 * 1024) return { file, compressed: false };
 
@@ -393,7 +394,7 @@ async function handleUpload(rawFile) {
     const originalName = rawFile.name || compressed.name || "upload";
     if (!originalName) throw new Error("原始文件名不可为空");
     if (compressed.size > MAX_DIRECT_SIZE) {
-      throw new Error(`压缩后文件仍超过 ${MAX_DIRECT_SIZE / 1024 / 1024}MB，请先手动压缩`);
+      throw new Error(`文件超过 ${MAX_DIRECT_SIZE / 1024 / 1024}MB 限制，请先手动压缩`);
     }
     $("progressBar").style.width = "20%";
 
@@ -490,6 +491,10 @@ function renderList(items) {
     img.src = it.url;
     img.alt = it.filename;
     img.referrerPolicy = "no-referrer";
+    img.title = "点击打开分享页";
+    img.style.cursor = "pointer";
+    // 点击缩略图跳转到全屏分享页
+    img.addEventListener("click", () => window.open(SHARE_BASE + it.filename, "_blank"));
     card.appendChild(img);
 
     const body = document.createElement("div");
@@ -517,8 +522,9 @@ function renderList(items) {
 
     const copyBtn = document.createElement("button");
     copyBtn.className = "btn-sm";
-    copyBtn.textContent = "复制链接";
-    copyBtn.addEventListener("click", () => copyText(it.url));
+    copyBtn.textContent = "复制分享链接";
+    // 复制我们自己的域名链接
+    copyBtn.addEventListener("click", () => copyText(SHARE_BASE + it.filename));
     actions.appendChild(copyBtn);
 
     const delBtn = document.createElement("button");
@@ -570,13 +576,13 @@ async function deleteImage(id) {
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
-    toast("已复制链接");
+    toast("分享链接已复制");
   } catch {
     const ta = document.createElement("textarea");
     ta.value = text;
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand("copy"); toast("已复制链接"); }
+    try { document.execCommand("copy"); toast("分享链接已复制"); }
     catch { toast("复制失败，请手动复制"); }
     document.body.removeChild(ta);
   }
